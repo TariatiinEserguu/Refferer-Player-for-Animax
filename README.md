@@ -1,4 +1,13 @@
-# Refferer-Player-for-Animax
-Referer-spoofing HLS/MP4 player. Run `npm install && npm start`, open http://localhost:3000.
+# Referer Player
 
-Set `ALLOWED_HOSTS` (comma-separated) to override the default animax/playmax CDN hosts; `PORT` changes the port.
+Next.js app that plays Playmax / Animax videos through a Referer-aware proxy.
+
+- Paste a Playmax episode link (`https://playmax.mn/#/watch/5587/43666`) to get 480p–2160p options,
+  or paste a direct `cdnN.animax.mn` / `cdnN.playmax.mn` `.mp4` / `.m3u8` link.
+- Optional custom Referer (defaults to `https://animax.mn/`).
+- `/api/video` proxies the media with Range support and rewrites HLS playlists. Only Animax/Playmax hosts are allowed.
+
+```bash
+npm install
+npm run dev
+```

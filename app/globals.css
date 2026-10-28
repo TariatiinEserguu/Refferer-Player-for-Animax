@@ -1,0 +1,189 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #0b0d18;
+  color: #f5f6fa;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 56px 20px;
+}
+
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.brand {
+  color: #969cff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 6vw, 44px);
+  letter-spacing: -1.5px;
+}
+
+.subtitle {
+  color: #a2a9bd;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+label {
+  display: block;
+  color: #bfc5d8;
+  font-size: 13px;
+  margin: 18px 0 10px;
+}
+
+textarea {
+  width: 100%;
+  padding: 15px;
+  background: #151827;
+  border: 1px solid #30364b;
+  border-radius: 12px;
+  color: #fff;
+  outline: none;
+  resize: vertical;
+  min-height: 120px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+textarea:focus {
+  border-color: #858bff;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0 24px;
+}
+
+button,
+.button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 17px;
+  background: #747bff;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button:hover,
+.button:hover {
+  opacity: 0.86;
+}
+
+.secondary {
+  background: #252b40;
+}
+
+.panel {
+  background: #111522;
+  border: 1px solid #292f43;
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.url {
+  color: #b8c1ff;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  border-radius: 10px;
+  margin-top: 14px;
+}
+
+.error {
+  color: #ff9292;
+  font-size: 14px;
+}
+
+.hint {
+  color: #9da5bb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 32px 15px;
+  }
+
+  .panel {
+    padding: 15px;
+  }
+}
+
+input,
+select {
+  width: 100%;
+  padding: 13px 15px;
+  background: #151827;
+  border: 1px solid #30364b;
+  border-radius: 12px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #858bff;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.eyebrow {
+  color: #969cff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+}
+
+.description {
+  color: #a2a9bd;
+  line-height: 1.7;
+}
