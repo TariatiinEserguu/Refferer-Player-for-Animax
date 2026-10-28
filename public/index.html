@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Referer Player</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 16px;
+      background: #111;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    input {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #444;
+      border-radius: 7px;
+      background: #202020;
+      color: white;
+    }
+
+    button {
+      padding: 12px 22px;
+      background: #e50914;
+      color: white;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      background: black;
+      border-radius: 8px;
+    }
+
+    #status {
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+      color: #bbb;
+    }
+
+    @media (max-width: 600px) {
+      .bar { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <h2>Referer Player</h2>
+
+  <div class="bar">
+    <input id="url" type="url"
+      placeholder="Video URL (.m3u8 / .mp4)">
+  </div>
+
+  <div class="bar">
+    <input id="referer" type="url"
+      placeholder="Custom Referer URL (optional)">
+    <button id="play">Play</button>
+  </div>
+
+  <video id="video" controls playsinline></video>
+  <div id="status" role="status">Checking server...</div>
+</main>
+
+<script src="/vendor/hls.min.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+
+  const urlInput = $("url");
+  const refererInput = $("referer");
+  const video = $("video");
+  const button = $("play");
+  const status = $("status");
+
+  let hls = null;
+
+  function message(text) {
+    status.textContent = text;
+  }
+
+  async function requestJson(url, options = {}) {
+    const response = await fetch(url, options);
+    const text = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `Server returned invalid JSON (HTTP ${response.status}). ` +
+        (text.slice(0, 180) || "Empty response") +
+        ". Make sure you opened the player at http://localhost:3000."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    return data;
+  }
+
+  async function checkServer() {
+    try {
+      await requestJson("/api/health");
+      message("Server connected. Ready to play.");
+    } catch (error) {
+      message("Server connection failed: " + error.message);
+    }
+  }
+
+  async function playVideo() {
+    const url = urlInput.value.trim();
+    const referer = refererInput.value.trim();
+
+    if (!url) {
+      message("Enter a video URL.");
+      return;
+    }
+
+    try {
+      new URL(url);
+
+      if (referer) new URL(referer);
+    } catch {
+      message("Enter valid HTTP or HTTPS URLs.");
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+
+      message("Connecting to server...");
+
+      const data = await requestJson("/api/play", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ url, referer })
+      });
+
+      if (!data.playUrl) {
+        throw new Error("Server did not return a playback URL.");
+      }
+
+      const isHls = /\.m3u8(?:$|[?#])/i.test(url);
+
+      if (isHls && window.Hls && Hls.isSupported()) {
+        hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+
+        hls.on(Hls.Events.ERROR, (event, err) => {
+          if (!err.fatal) return;
+
+          if (err.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            message("Network error, retrying...");
+            hls.startLoad();
+          } else if (err.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            message("Media error, recovering...");
+            hls.recoverMediaError();
+          } else {
+            message("HLS playback error: " + err.details);
+            hls.destroy();
+            hls = null;
+          }
+        });
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {
+            message("Stream loaded. Press Play to start.");
+          });
+        });
+
+        hls.loadSource(data.playUrl);
+        hls.attachMedia(video);
+        message("Loading HLS stream...");
+      } else {
+        video.src = data.playUrl;
+
+        try {
+          await video.play();
+          message("Playing.");
+        } catch {
+          message("Video loaded. Press Play to start.");
+        }
+      }
+    } catch (error) {
+      message("Error: " + error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  try {
+    urlInput.value = localStorage.getItem("rp.url") || "";
+    refererInput.value = localStorage.getItem("rp.referer") || "";
+  } catch {}
+
+  function saveInputs() {
+    try {
+      localStorage.setItem("rp.url", urlInput.value);
+      localStorage.setItem("rp.referer", refererInput.value);
+    } catch {}
+  }
+
+  button.addEventListener("click", () => {
+    saveInputs();
+    playVideo();
+  });
+
+  refererInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      saveInputs();
+      playVideo();
+    }
+  });
+
+  urlInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      saveInputs();
+      playVideo();
+    }
+  });
+
+  video.addEventListener("error", () => {
+    message("Video playback failed. Check the URL and server logs.");
+  });
+
+  checkServer();
+</script>
+</body>
+</html>
